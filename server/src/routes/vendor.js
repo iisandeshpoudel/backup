@@ -122,12 +122,10 @@ router.get("/products/recent", async (req, res) => {
     res.json(productsWithFullUrls);
   } catch (error) {
     console.error("Error in /products/recent:", error);
-    res
-      .status(500)
-      .json({
-        message: "Error fetching recent products",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error fetching recent products",
+      error: error.message,
+    });
   }
 });
 
@@ -200,12 +198,10 @@ router.patch("/products/:id/availability", async (req, res) => {
 
     res.json(product);
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Error updating product availability",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error updating product availability",
+      error: error.message,
+    });
   }
 });
 
@@ -301,7 +297,8 @@ router.get("/rentals/pending", async (req, res) => {
       .populate("renter", "name email")
       .sort("-createdAt");
 
-    // Transform image URLs if needed
+    // Transform image URLs
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
     const rentalsWithFullUrls = rentals.map((rental) => ({
       ...rental.toObject(),
       product: {
@@ -310,19 +307,19 @@ router.get("/rentals/pending", async (req, res) => {
           ...image,
           url: image.url.startsWith("http")
             ? image.url
-            : `${req.protocol}://${req.get("host")}${image.url}`,
+            : `${baseUrl}/api/${
+                image.url.startsWith("/") ? image.url.slice(1) : image.url
+              }`,
         })),
       },
     }));
 
     res.json(rentalsWithFullUrls);
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Error fetching pending rentals",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error fetching pending rentals",
+      error: error.message,
+    });
   }
 });
 

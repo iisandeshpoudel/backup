@@ -14,6 +14,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import StyledDatePicker from "../components/StyledDatePicker";
 import { getImageUrl } from "../utils/imageUrl";
 import ProductChat from "../components/ProductChat";
+import ReviewSection from "../components/ReviewSection";
 
 interface BookingInfo {
   startDate: Date;
@@ -43,6 +44,7 @@ interface Product {
     count: number;
   };
   reviews: {
+    _id: string; // Add _id field to review
     user: {
       _id: string;
       name: string;
@@ -57,6 +59,8 @@ interface Product {
   };
   vendor: string; // Add vendor field to Product interface
 }
+
+// Remove unused Review interface since it's already defined in ReviewSection component
 
 export default function ProductDetails() {
   const { id } = useParams<{ id: string }>();
@@ -248,6 +252,10 @@ export default function ProductDetails() {
         ))}
       </div>
     );
+  };
+
+  const handleReviewAdded = () => {
+    fetchProduct(); // Refresh the product data to get the new review
   };
 
   if (error || !product) {
@@ -558,40 +566,12 @@ export default function ProductDetails() {
           </div>
         )}
 
-        {/* Reviews section */}
-        {product.reviews.length > 0 && (
-          <div className="mt-16 border-t border-gray-700 pt-8">
-            <h2 className="text-2xl font-bold text-white">Reviews</h2>
-            <div className="mt-8 space-y-8">
-              {product.reviews.map((review) => (
-                <div
-                  key={review.user._id}
-                  className="border-b border-gray-700 pb-8"
-                >
-                  <div className="flex items-center">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <StarIcon
-                          key={i}
-                          className={`h-5 w-5 ${
-                            i < review.rating
-                              ? "text-yellow-400"
-                              : "text-gray-700"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <p className="ml-4 text-sm text-gray-400">
-                      by {review.user.name} •{" "}
-                      {new Date(review.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <p className="mt-4 text-gray-300">{review.comment}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Replace the old reviews section with our new ReviewSection component */}
+        <ReviewSection
+          productId={product._id}
+          reviews={product.reviews}
+          onReviewAdded={handleReviewAdded}
+        />
       </div>
     </div>
   );
