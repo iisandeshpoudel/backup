@@ -1,10 +1,12 @@
 # Rentoo Project Development Tracking
 
 ## 🚀 Project Status
+
 Current Status: Role-based Dashboard Implementation & Rental System
 Last Updated: [Current Timestamp]
 
 ## 🔧 Technical Setup
+
 - Frontend: Vite + React + TypeScript
 - UI: Tailwind CSS (v3.4.1)
 - State Management: React Context
@@ -16,7 +18,9 @@ Last Updated: [Current Timestamp]
 - Image Storage: Local filesystem (development)
 
 ## 📦 Dependencies
+
 ### Frontend (client)
+
 ```json
 {
   "dependencies": {
@@ -38,6 +42,7 @@ Last Updated: [Current Timestamp]
 ```
 
 ### Backend (server)
+
 - Node.js + Express
 - MongoDB with Mongoose
 - JWT Authentication
@@ -45,13 +50,16 @@ Last Updated: [Current Timestamp]
 - Multer for file uploads
 
 ## ✅ Completed Features
+
 1. Project Setup
+
    - ✓ Frontend initialization with Vite
    - ✓ Backend setup with Express
    - ✓ MongoDB connection
    - ✓ Basic middleware setup
 
 2. Authentication System
+
    - ✓ User model implementation
    - ✓ JWT authentication
    - ✓ Register endpoint
@@ -59,6 +67,7 @@ Last Updated: [Current Timestamp]
    - ✓ Protected routes middleware
 
 3. Frontend Authentication
+
    - ✓ Auth Context setup
    - ✓ Login page with styling
    - ✓ Register page
@@ -66,6 +75,7 @@ Last Updated: [Current Timestamp]
    - ✓ Role-based route protection
 
 4. UI Implementation
+
    - ✓ Tailwind CSS setup and configuration
    - ✓ Dark mode implementation
    - ✓ Responsive layout structure
@@ -75,6 +85,7 @@ Last Updated: [Current Timestamp]
    - ✓ Styling issues resolved
 
 5. Product Management
+
    - ✓ Product model with rental properties
    - ✓ Basic CRUD operations
    - ✓ Image upload system
@@ -87,6 +98,7 @@ Last Updated: [Current Timestamp]
    - ✓ Product listing page
 
 6. Role-based Dashboards
+
    - ✓ Admin Dashboard
      - ✓ User statistics
      - ✓ Recent users list
@@ -101,6 +113,7 @@ Last Updated: [Current Timestamp]
      - ✓ Rental history
 
 7. Rental System
+
    - ✓ Rental model implementation
    - ✓ Rental creation endpoint
    - ✓ Rental management endpoints
@@ -115,55 +128,116 @@ Last Updated: [Current Timestamp]
      - ✓ Enhanced error handling
 
 8. Currency Implementation
+
    - ✓ Changed from USD ($) to NPR (Rs.)
    - ✓ Updated all price displays
    - ✓ Added Nepali Rupee symbol (रू) in forms
 
+9. Chat System
+   - ✓ Message model implementation
+   - ✓ Chat API endpoints
+     - ✓ GET /chat/conversations - List chats
+     - ✓ GET /chat/product/:productId - Get messages
+     - ✓ POST /chat/product/:productId - Send message
+   - ✓ Role-based messaging
+     - ✓ Customer to vendor routing
+     - ✓ Vendor to customer routing
+     - ✓ Product-specific conversations
+   - ✓ Chat UI implementation
+     - ✓ Combined chat list and window
+     - ✓ Real-time message updates (polling)
+     - ✓ Chat history with timestamps
+     - ✓ Message sending with loading states
+     - ✓ Error handling and retries
+   - ✓ Product context preservation
+     - ✓ Product details in chat
+     - ✓ Product image display
+     - ✓ Rental status updates
+
 ## 🚧 Current Sprint
-Focus: Rental System Enhancement and Bug Fixes
+
+Focus: Chat System Enhancement and User Experience
 
 ### Recently Fixed Issues
+
 1. Image Display
+
    - ✓ Fixed image URLs in product cards
    - ✓ Implemented proper image URL transformation
    - ✓ Added image preview in product details
+   - ✓ Fixed placeholder image loading
+   - ✓ Standardized image URL handling across components
+   - ✓ Added detailed error logging for debugging
 
 2. Rental System
+
    - ✓ Fixed rental creation endpoint
    - ✓ Added proper validation for rental dates
    - ✓ Implemented price calculation
    - ✓ Added rental status management
 
+3. Chat Window
+   - ✓ Implemented unified chat interface
+   - ✓ Fixed message fetching
+   - ✓ Added real-time updates
+   - ✓ Fixed message sending
+   - ✓ Added proper role-based routing
+
 ### Known Issues
+
 1. ~~Double API prefix in rental creation~~ (Fixed)
 2. ~~Currency symbol inconsistency~~ (Fixed)
 3. ~~Rental status transitions too restrictive~~ (Fixed)
 4. ~~Need better error handling in rental modal~~ (Fixed)
-5. Missing success messages after rental actions
-6. Need to implement rental notifications
-7. Consider adding rental history filters
+5. ~~Missing chat window in MyChats~~ (Fixed)
+6. ~~Message routing issues~~ (Fixed)
+7. ~~Image URLs not handling /api prefix correctly~~ (Fixed)
+8. Missing success messages after rental actions
+9. Need to implement rental notifications
+10. Consider adding rental history filters
+11. Need to implement WebSocket for better real-time
+12. Missing typing indicators
+13. Missing read receipts
+14. No file attachment support
+15. No chat notifications
 
 ### In Progress
+
 1. Rental System Enhancement
+
    - [ ] Add success notifications
    - [ ] Implement rental notifications
    - [ ] Add rental history pagination
    - [ ] Implement rental analytics
 
 2. Dashboard Improvements
+
    - [ ] Add search functionality
    - [ ] Implement filters
    - [ ] Add sorting options
    - [ ] Improve mobile responsiveness
 
+3. Chat System Enhancement
+   - [ ] Replace polling with WebSocket
+   - [ ] Implement typing indicators
+   - [ ] Add read receipts
+   - [ ] Add file attachments
+   - [ ] Add chat notifications
+   - [ ] Add emoji support
+   - [ ] Implement message reactions
+   - [ ] Add message search
+
 ## 📝 Next Steps
+
 1. Chat System Implementation
+
    - [ ] Real-time messaging
    - [ ] Chat history
    - [ ] Notifications
    - [ ] Unread message indicators
 
 2. Review System
+
    - [ ] Product reviews
    - [ ] Rating system
    - [ ] Review moderation
@@ -176,6 +250,7 @@ Focus: Rental System Enhancement and Bug Fixes
    - [ ] Location-based search
 
 ## 🔍 Important Notes
+
 1. All API endpoints should be prefixed with `/api`
 2. Image URLs need to be transformed for proper display
 3. All prices are in NPR (Nepali Rupees)
@@ -184,6 +259,7 @@ Focus: Rental System Enhancement and Bug Fixes
 6. Maintain proper error handling across all components
 
 ## 🎯 Development Guidelines
+
 1. Always update PROJECT_TRACKING.md with new changes
 2. Follow the established component structure
 3. Maintain consistent error handling
@@ -192,7 +268,9 @@ Focus: Rental System Enhancement and Bug Fixes
 6. Keep the currency format consistent (NPR)
 
 ## 🎨 UI Components & Styling
+
 ### Implemented Components
+
 - Auth pages (Login/Register)
 - Loading spinner
 - Navigation bar
@@ -205,6 +283,7 @@ Focus: Rental System Enhancement and Bug Fixes
 - Image upload component
 
 ### Style System
+
 ```css
 /* Base Components */
 .form-input {
@@ -225,7 +304,9 @@ Focus: Rental System Enhancement and Bug Fixes
 ```
 
 ## 📊 Dashboard Features
+
 ### Common Features
+
 - Search functionality
 - Interactive toggles
 - Notification center
@@ -233,13 +314,16 @@ Focus: Rental System Enhancement and Bug Fixes
 - Basic statistics
 
 ### Role-specific Features
+
 1. Admin Dashboard
+
    - User management table
    - System-wide statistics
    - Activity logs
    - Global search
 
 2. Vendor Dashboard
+
    - Product management
    - Rental requests
    - Chat management
@@ -252,7 +336,9 @@ Focus: Rental System Enhancement and Bug Fixes
    - Rental status
 
 ## 💬 Chat System Architecture
+
 1. Core Features
+
    - Direct messaging
    - Message history
    - Unread indicators
@@ -266,7 +352,9 @@ Focus: Rental System Enhancement and Bug Fixes
    - Chat storage schema
 
 ## 🔔 Notification System Design
+
 1. Notification Types
+
    - Chat messages
    - Rental updates
    - System alerts
@@ -279,6 +367,7 @@ Focus: Rental System Enhancement and Bug Fixes
    - Clear all functionality
 
 ## 🐛 Known Issues
+
 1. ~~Image display issues in product cards~~ (Fixed)
 2. ~~Image preview not showing in product form~~ (Fixed)
 3. ~~Image URLs not working in development~~ (Fixed)
@@ -286,6 +375,7 @@ Focus: Rental System Enhancement and Bug Fixes
 ## Recent Updates (Latest First)
 
 ### Rental Status Management System Enhancement (Latest)
+
 - Improved rental status transitions:
   - Added flexible status transitions with proper validation
   - Implemented ability to undo status changes (e.g., completed → active)
@@ -306,6 +396,7 @@ Focus: Rental System Enhancement and Bug Fixes
 - Fixed schema validation for rental status
 
 ### Known Issues
+
 1. ~~Product edit form validation errors~~ (Fixed)
 2. ~~Missing product fetch endpoint~~ (Fixed)
 3. ~~Weekly/Monthly pricing confusion~~ (Removed)
@@ -315,6 +406,7 @@ Focus: Rental System Enhancement and Bug Fixes
 7. Consider adding bulk image upload option
 
 ### Pricing Model Simplification and Rental System Updates
+
 - Simplified pricing model to use only daily rates:
   - Removed weekly pricing (perWeek)
   - Removed monthly pricing (perMonth)
@@ -335,13 +427,16 @@ Focus: Rental System Enhancement and Bug Fixes
   - Improved validation messages
 
 ### Next Steps
+
 1. Product Management Enhancement
+
    - [ ] Add image deletion in edit mode
    - [ ] Add drag-and-drop image reordering
    - [ ] Implement bulk image upload
    - [ ] Add image compression before upload
 
 2. User Experience Improvements
+
    - [ ] Add success notifications after actions
    - [ ] Improve form validation feedback
    - [ ] Add loading states for images
@@ -354,6 +449,7 @@ Focus: Rental System Enhancement and Bug Fixes
    - [ ] Improve vendor management features
 
 ### Route Separation and Navigation Fixes
+
 - Created dedicated My Rentals page to replace CustomerDashboard component
 - Implemented real-time data fetching for rental statistics and recent rentals
 - Added proper loading and error states for data fetching
@@ -361,6 +457,7 @@ Focus: Rental System Enhancement and Bug Fixes
 - Fixed routing issues to ensure proper navigation to My Rentals page
 
 ### Key Features
+
 - Simplified pricing model with only daily rates
 - Improved product management workflow
 - Consistent API endpoint structure
@@ -369,6 +466,7 @@ Focus: Rental System Enhancement and Bug Fixes
 - Proper image handling in both create and edit modes
 
 ## 🎯 Important Notes
+
 1. All API endpoints should be prefixed with `/api` in the backend only
 2. Frontend requests should NOT include `/api` prefix (handled by axios config)
 3. All prices are in NPR (Nepali Rupees)
@@ -378,6 +476,7 @@ Focus: Rental System Enhancement and Bug Fixes
 7. Image size limit: 10MB per image
 
 ### Image Handling Implementation
+
 - Centralized image URL handling:
   - Implemented `getImageUrl` utility in `client/src/utils/imageUrl.ts`
   - Handles various URL formats:
@@ -397,15 +496,18 @@ Focus: Rental System Enhancement and Bug Fixes
   - User profiles (future implementation)
 
 ### API Endpoint Structure
+
 Base URL: `http://localhost:5000/api`
 
 #### Authentication Routes (`/api/auth`)
+
 - POST `/register` - User registration
 - POST `/login` - User login
 - GET `/me` - Get current user
 - POST `/logout` - User logout
 
 #### Product Routes (`/api/products`)
+
 - GET `/` - List all products with filtering
 - GET `/:id` - Get single product
 - POST `/` - Create product (protected, vendor only)
@@ -416,6 +518,7 @@ Base URL: `http://localhost:5000/api`
 - GET `/:id/rentals` - Get product rentals
 
 #### Vendor Routes (`/api/vendor`)
+
 - GET `/stats` - Get vendor stats
 - GET `/products` - Get vendor's products
 - GET `/products/recent` - Get recent products
@@ -429,6 +532,7 @@ Base URL: `http://localhost:5000/api`
 - PATCH `/rentals/:id/status` - Update rental status
 
 #### Customer Routes (`/api/customer`)
+
 - GET `/stats` - Get customer stats
 - GET `/rentals/active` - Get active rentals
 - GET `/rentals/history` - Get rental history
@@ -436,6 +540,7 @@ Base URL: `http://localhost:5000/api`
 - POST `/rentals/:id/cancel` - Cancel rental
 
 #### Admin Routes (`/api/admin`)
+
 - GET `/stats` - Get admin stats
 - GET `/users` - Get all users
 - GET `/users/recent` - Get recent users
@@ -445,17 +550,21 @@ Base URL: `http://localhost:5000/api`
 ### Guidelines for Future Features
 
 #### Adding New Features (e.g., Chat, Notifications, Reviews)
+
 1. Route Structure:
+
    - Follow the established pattern: `/api/feature-name`
    - Use consistent HTTP methods (GET, POST, PATCH, DELETE)
    - Maintain role-based access control
 
 2. Image Handling:
+
    - Use the `getImageUrl` utility for any image URLs
    - Follow the established error handling pattern
    - Maintain consistent image storage in `/uploads`
 
 3. Frontend Components:
+
    - Use consistent styling (dark theme, rounded corners, etc.)
    - Implement proper loading and error states
    - Follow established motion/animation patterns
@@ -467,7 +576,9 @@ Base URL: `http://localhost:5000/api`
    - Implement proper validation and error handling
 
 #### Example: Adding Chat Feature
+
 1. API Endpoints:
+
    ```
    /api/chat
    ├── GET /conversations - List user's conversations
@@ -478,6 +589,7 @@ Base URL: `http://localhost:5000/api`
    ```
 
 2. Image Handling:
+
    ```typescript
    // For chat attachments/images
    const imageUrl = getImageUrl(message.attachment?.url);
@@ -493,7 +605,9 @@ Base URL: `http://localhost:5000/api`
    ```
 
 #### Example: Adding Notifications
+
 1. API Endpoints:
+
    ```
    /api/notifications
    ├── GET / - Get user's notifications
@@ -513,23 +627,28 @@ Base URL: `http://localhost:5000/api`
    ```
 
 ### Key Principles
+
 1. Consistency:
+
    - Follow established naming conventions
    - Use consistent styling and animations
    - Maintain consistent error handling
    - Follow established data patterns
 
 2. Type Safety:
+
    - Use TypeScript interfaces
    - Define clear data models
    - Maintain proper validation
 
 3. Error Handling:
+
    - Implement proper error boundaries
    - Use consistent error messages
    - Maintain detailed error logging
 
 4. Performance:
+
    - Implement proper loading states
    - Use pagination where needed
    - Optimize image loading and caching
@@ -541,6 +660,7 @@ Base URL: `http://localhost:5000/api`
    - Handle file uploads securely
 
 ### Next Steps
+
 - Implement chat system following established patterns
 - Add notification system
 - Enhance review system
@@ -550,9 +670,11 @@ Base URL: `http://localhost:5000/api`
 - Enhance search functionality
 
 ---
+
 Note: This file serves as a continuous development reference. When starting a new chat, refer to this file for the current project state and continue development from here.
 
 ### Admin Dashboard Bug Fixes
+
 - Identified issues with Admin Dashboard functionality:
   - Total Active Users count showing incorrect numbers
   - Rental tab not displaying data properly
@@ -564,13 +686,15 @@ Note: This file serves as a continuous development reference. When starting a ne
   - Fix search parameters handling in rental queries
 
 ### Key Improvements Needed
+
 - Accurate user statistics calculation
 - Proper rental data population and filtering
 - Consistent data transformation across endpoints
 - Better error handling and validation
 
 ### Next Steps
+
 - Fix stats endpoint to count only active users
 - Update rental search endpoint for proper field population
 - Implement proper data transformation for rentals
-- Add validation for search parameters 
+- Add validation for search parameters

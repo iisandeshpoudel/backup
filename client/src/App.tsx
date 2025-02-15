@@ -1,21 +1,27 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Layout from './components/Layout';
-import Loading from './components/Loading';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import AdminDashboard from './pages/AdminDashboard';
-import VendorDashboard from './pages/VendorDashboard';
-import CustomerDashboard from './pages/CustomerDashboard';
-import Products from './pages/Products';
-import AddProduct from './pages/AddProduct';
-import ProductDetails from './pages/ProductDetails';
-import MyRentals from './pages/MyRentals';
-import RoleRoute from './components/RoleRoute';
-import VendorProducts from './pages/VendorProducts';
-import VendorRentals from './pages/VendorRentals';
-import Revenue from './pages/Revenue';
-import Profile from './pages/Profile';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import Layout from "./components/Layout";
+import Loading from "./components/Loading";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import AdminDashboard from "./pages/AdminDashboard";
+import VendorDashboard from "./pages/VendorDashboard";
+import CustomerDashboard from "./pages/CustomerDashboard";
+import Products from "./pages/Products";
+import AddProduct from "./pages/AddProduct";
+import ProductDetails from "./pages/ProductDetails";
+import MyRentals from "./pages/MyRentals";
+import RoleRoute from "./components/RoleRoute";
+import VendorProducts from "./pages/VendorProducts";
+import VendorRentals from "./pages/VendorRentals";
+import Revenue from "./pages/Revenue";
+import Profile from "./pages/Profile";
+import MyChats from "./pages/MyChats";
 
 // Protected route wrapper
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -41,11 +47,11 @@ function DashboardRouter() {
   }
 
   switch (user.role) {
-    case 'admin':
+    case "admin":
       return <AdminDashboard />;
-    case 'vendor':
+    case "vendor":
       return <VendorDashboard />;
-    case 'customer':
+    case "customer":
       return <CustomerDashboard />;
     default:
       return <Navigate to="/products" />;
@@ -104,7 +110,7 @@ function App() {
           <Route
             path="/products/add"
             element={
-              <RoleRoute allowedRoles={['vendor']}>
+              <RoleRoute allowedRoles={["vendor"]}>
                 <Layout>
                   <AddProduct />
                 </Layout>
@@ -116,7 +122,7 @@ function App() {
           <Route
             path="/customer/rentals"
             element={
-              <RoleRoute allowedRoles={['customer']}>
+              <RoleRoute allowedRoles={["customer"]}>
                 <Layout>
                   <MyRentals />
                 </Layout>
@@ -128,7 +134,7 @@ function App() {
           <Route
             path="/vendor/products"
             element={
-              <RoleRoute allowedRoles={['vendor']}>
+              <RoleRoute allowedRoles={["vendor"]}>
                 <Layout>
                   <VendorProducts />
                 </Layout>
@@ -139,7 +145,7 @@ function App() {
           <Route
             path="/vendor/products/:id/edit"
             element={
-              <RoleRoute allowedRoles={['vendor']}>
+              <RoleRoute allowedRoles={["vendor"]}>
                 <Layout>
                   <AddProduct />
                 </Layout>
@@ -150,7 +156,7 @@ function App() {
           <Route
             path="/vendor/rentals"
             element={
-              <RoleRoute allowedRoles={['vendor']}>
+              <RoleRoute allowedRoles={["vendor"]}>
                 <Layout>
                   <VendorRentals />
                 </Layout>
@@ -161,9 +167,21 @@ function App() {
           <Route
             path="/revenue"
             element={
-              <RoleRoute allowedRoles={['vendor']}>
+              <RoleRoute allowedRoles={["vendor"]}>
                 <Layout>
                   <Revenue />
+                </Layout>
+              </RoleRoute>
+            }
+          />
+
+          {/* Chat Routes */}
+          <Route
+            path="/chats"
+            element={
+              <RoleRoute allowedRoles={["customer", "vendor"]}>
+                <Layout>
+                  <MyChats />
                 </Layout>
               </RoleRoute>
             }
@@ -173,7 +191,7 @@ function App() {
           <Route
             path="/admin/*"
             element={
-              <RoleRoute allowedRoles={['admin']}>
+              <RoleRoute allowedRoles={["admin"]}>
                 <Layout>
                   <AdminDashboard />
                 </Layout>
@@ -183,7 +201,7 @@ function App() {
 
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/products" />} />
-          
+
           {/* Catch all route */}
           <Route path="*" element={<Navigate to="/products" />} />
         </Routes>
