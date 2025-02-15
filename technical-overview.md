@@ -11,14 +11,49 @@ This is a localhost demo implementation, not intended for production use. The fe
 - WebSocket: Local WebSocket server
 - No external services required
 
-## Implementation Notes
+### Database Initialization (Important)
 
-- All features are simplified for demo purposes
-- No production-level security measures required
-- Local storage for all data and files
-- Basic error handling
-- Simple WebSocket implementation
-- No need for complex scaling solutions
+When setting up a new development environment:
+
+1. Ensure MongoDB is running locally
+2. Run the initialization script: `node src/scripts/initTestAccounts.js`
+3. This creates necessary test accounts for admin, vendor, and customer roles
+4. Test accounts are only created if they don't already exist
+5. All passwords are properly hashed before storage
+
+## Core Features Status
+
+### 1. Chat System ✓
+
+- Real-time messaging implemented
+- Product-based conversations
+- Message history with pagination
+- Read receipts and typing indicators
+- Image sharing support
+- Unified chat interface
+- Role-based message routing
+
+### 2. Review System ✓
+
+- Star rating (1-5)
+- Text reviews
+- Review moderation
+- Vendor responses
+- Review analytics
+- Image attachments
+- Review filtering and sorting
+
+### 3. Notification System ✓
+
+- Real-time notifications
+- Type-specific notifications
+- Read/unread status
+- Clear visual hierarchy
+- Role-based routing
+- Grouped notifications
+- Sound notifications
+
+## Technical Implementation Notes
 
 ### Image URL Handling - Critical Note
 

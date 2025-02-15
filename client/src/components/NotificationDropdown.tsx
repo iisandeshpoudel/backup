@@ -92,20 +92,15 @@ export const NotificationDropdown = () => {
 
   return (
     <Menu as="div" className="relative ml-3">
-      <div>
-        <Menu.Button className="relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
-          <span className="sr-only">View notifications</span>
-          <BellIcon className="h-6 w-6" aria-hidden="true" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 inline-flex items-center justify-center h-5 w-5 rounded-full bg-red-600 text-xs font-medium text-white">
-              {unreadCount}
-            </span>
-          )}
-          {hasPendingAction && (
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-gray-800" />
-          )}
-        </Menu.Button>
-      </div>
+      <Menu.Button className="relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+            {unreadCount}
+          </span>
+        )}
+        <BellIcon className="h-6 w-6" aria-hidden="true" />
+      </Menu.Button>
+
       <Transition
         as={Fragment}
         enter="transition ease-out duration-100"
@@ -116,15 +111,28 @@ export const NotificationDropdown = () => {
         leaveTo="transform opacity-0 scale-95"
       >
         <Menu.Items className="absolute right-0 z-10 mt-2 w-96 origin-top-right rounded-md bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-          <div className="px-4 py-2 border-b border-gray-700 flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-white">Notifications</h3>
+          <div className="px-4 py-2 border-b border-gray-700">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-white">
+                Notifications
+              </h3>
+              <div className="flex items-center gap-2">
+                {notifications.length > 0 && (
+                  <button
+                    onClick={() => markAllAsRead()}
+                    className="inline-flex items-center text-sm text-blue-400 hover:text-blue-300"
+                  >
+                    <CheckCircleIcon className="h-4 w-4 mr-1" />
+                    Mark all as read
+                  </button>
+                )}
+              </div>
+            </div>
             {unreadCount > 0 && (
-              <button
-                onClick={() => markAllAsRead()}
-                className="text-sm text-blue-400 hover:text-blue-300"
-              >
-                Mark all as read
-              </button>
+              <p className="text-sm text-gray-400 mt-1">
+                You have {unreadCount} unread notification
+                {unreadCount !== 1 ? "s" : ""}
+              </p>
             )}
           </div>
           <div className="max-h-96 overflow-y-auto">
