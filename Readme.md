@@ -82,14 +82,17 @@ node src/scripts/initTestAccounts.js
 This will create the following test accounts if they don't already exist:
 
 Admin Account:
+
 - Email: admin@test.com
 - Password: admin123
 
 Vendor Account:
+
 - Email: vendor@test.com
 - Password: vendor123
 
 Customer Account:
+
 - Email: customer@test.com
 - Password: customer123
 
@@ -217,15 +220,6 @@ JWT_SECRET=your_jwt_secret
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
-## Development Guidelines
-
-1. Follow TypeScript best practices
-2. Use proper error handling
-3. Maintain consistent styling with Tailwind CSS
-4. Follow the established component structure
-5. Keep the file naming conventions
-6. Use proper Git branching strategy
-
 ## Common Issues
 
 1. Image URLs not working
@@ -241,7 +235,3 @@ VITE_API_BASE_URL=http://localhost:5000/api
 3. Database connection issues
    - Verify MongoDB is running
    - Check connection string in .env
-
-## License
-
-MIT License
