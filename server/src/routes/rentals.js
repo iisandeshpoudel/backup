@@ -208,19 +208,17 @@ router.get("/my-listings-rentals", auth, async (req, res) => {
 // Update rental status
 router.patch("/:id/status", auth, async (req, res) => {
   try {
-    const rental = await Rental.findById(req.params.id);
+    const rental = await Rental.findOne({
+      _id: req.params.id,
+      owner: req.user._id,
+    })
+      .populate("product")
+      .populate("renter", "name email");
+
     if (!rental) {
       return res.status(404).json({ message: "Rental not found" });
     }
 
-    // Verify ownership
-    if (rental.product.owner.toString() !== req.user._id.toString()) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to update this rental" });
-    }
-
-    // Validate status transition
     const { status } = req.body;
     const validStatuses = [
       "pending",
@@ -228,9 +226,35 @@ router.patch("/:id/status", auth, async (req, res) => {
       "active",
       "completed",
       "rejected",
+      "cancelled",
     ];
+
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
+    }
+
+    // Validate status transitions
+    const validTransitions = {
+      pending: ["approved", "rejected", "cancelled"],
+      approved: ["active", "cancelled"],
+      active: ["completed", "cancelled"],
+      completed: [],
+      rejected: [],
+      cancelled: [],
+    };
+
+    if (!validTransitions[rental.status]?.includes(status)) {
+      return res.status(400).json({
+        message: `Invalid status transition from ${rental.status} to ${status}`,
+      });
+    }
+
+    // Special handling for completion
+    if (status === "completed") {
+      // Make the product available again
+      await Product.findByIdAndUpdate(rental.product._id, {
+        "availability.isAvailable": true,
+      });
     }
 
     rental.status = status;
@@ -239,23 +263,13 @@ router.patch("/:id/status", auth, async (req, res) => {
     // Create notification for status change
     await createRentalNotification(rental, "rental_status");
 
-    // If rental is completed, make product available again
-    if (status === "completed") {
-      const product = await Product.findById(rental.product._id);
-      if (product) {
-        product.availability.isAvailable = true;
-        await product.save();
-      }
-    }
-
-    res.json({
-      rental,
-      message: `Rental ${status} successfully`,
-    });
+    res.json(rental);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error updating rental status", error: error.message });
+    console.error("Error updating rental status:", error);
+    res.status(500).json({
+      message: "Error updating rental status",
+      error: error.message,
+    });
   }
 });
 

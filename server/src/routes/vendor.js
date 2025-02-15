@@ -34,29 +34,36 @@ router.get("/stats", async (req, res) => {
       await Promise.all([
         Product.countDocuments({ owner: req.user._id }),
         Rental.countDocuments({
-          "product.owner": req.user._id,
+          owner: req.user._id,
           status: "active",
         }),
         Rental.countDocuments({
-          "product.owner": req.user._id,
+          owner: req.user._id,
           status: { $in: ["completed", "active"] },
         }),
         Rental.countDocuments({
-          "product.owner": req.user._id,
+          owner: req.user._id,
           status: "pending",
         }),
       ]);
 
-    // Calculate total revenue
-    const completedRentals = await Rental.find({
-      "product.owner": req.user._id,
-      status: "completed",
-    });
+    // Calculate total revenue from both completed and active rentals
+    const revenuePipeline = await Rental.aggregate([
+      {
+        $match: {
+          owner: req.user._id,
+          status: { $in: ["completed", "active"] },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$totalPrice" },
+        },
+      },
+    ]);
 
-    const totalRevenue = completedRentals.reduce(
-      (sum, rental) => sum + rental.totalPrice,
-      0
-    );
+    const totalRevenue = revenuePipeline[0]?.totalRevenue || 0;
 
     res.json({
       totalProducts,
@@ -69,6 +76,134 @@ router.get("/stats", async (req, res) => {
     res
       .status(500)
       .json({ message: "Error fetching vendor stats", error: error.message });
+  }
+});
+
+// Get detailed revenue statistics
+router.get("/revenue-stats", async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [
+      totalRevenue,
+      monthlyRevenue,
+      weeklyRevenue,
+      dailyRevenue,
+      revenueByProduct,
+    ] = await Promise.all([
+      // Total revenue
+      Rental.aggregate([
+        {
+          $match: {
+            owner: req.user._id,
+            status: { $in: ["completed", "active"] },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$totalPrice" },
+          },
+        },
+      ]),
+      // Monthly revenue
+      Rental.aggregate([
+        {
+          $match: {
+            owner: req.user._id,
+            status: { $in: ["completed", "active"] },
+            startDate: { $gte: startOfMonth },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$totalPrice" },
+          },
+        },
+      ]),
+      // Weekly revenue
+      Rental.aggregate([
+        {
+          $match: {
+            owner: req.user._id,
+            status: { $in: ["completed", "active"] },
+            startDate: { $gte: startOfWeek },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$totalPrice" },
+          },
+        },
+      ]),
+      // Daily revenue
+      Rental.aggregate([
+        {
+          $match: {
+            owner: req.user._id,
+            status: { $in: ["completed", "active"] },
+            startDate: { $gte: startOfDay },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$totalPrice" },
+          },
+        },
+      ]),
+      // Revenue by product
+      Rental.aggregate([
+        {
+          $match: {
+            owner: req.user._id,
+            status: { $in: ["completed", "active"] },
+          },
+        },
+        {
+          $group: {
+            _id: "$product",
+            revenue: { $sum: "$totalPrice" },
+          },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: "_id",
+            foreignField: "_id",
+            as: "product",
+          },
+        },
+        {
+          $unwind: "$product",
+        },
+        {
+          $project: {
+            productId: "$_id",
+            productName: "$product.title",
+            revenue: 1,
+          },
+        },
+      ]),
+    ]);
+
+    res.json({
+      totalRevenue: totalRevenue[0]?.total || 0,
+      monthlyRevenue: monthlyRevenue[0]?.total || 0,
+      weeklyRevenue: weeklyRevenue[0]?.total || 0,
+      dailyRevenue: dailyRevenue[0]?.total || 0,
+      revenueByProduct,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching revenue statistics",
+      error: error.message,
+    });
   }
 });
 
@@ -324,101 +459,107 @@ router.get("/rentals/pending", async (req, res) => {
 });
 
 // Update rental status
-router.patch("/rentals/:id/status", async (req, res) => {
-  try {
-    console.log("Updating rental status:", {
-      rentalId: req.params.id,
-      userId: req.user._id,
-      newStatus: req.body.status,
-    });
-
-    const rental = await Rental.findOne({
-      _id: req.params.id,
-      owner: req.user._id,
-    });
-
-    if (!rental) {
-      console.log("Rental not found:", {
+router.patch(
+  "/rentals/:id/status",
+  auth,
+  authorize("vendor"),
+  async (req, res) => {
+    try {
+      console.log("Updating rental status:", {
         rentalId: req.params.id,
         userId: req.user._id,
+        newStatus: req.body.status,
       });
-      return res.status(404).json({ message: "Rental not found" });
-    }
 
-    console.log("Current rental state:", {
-      currentStatus: rental.status,
-      newStatus: req.body.status,
-    });
+      const rental = await Rental.findOne({
+        _id: req.params.id,
+        owner: req.user._id,
+      })
+        .populate("product")
+        .populate("renter", "name email");
 
-    const { status } = req.body;
+      if (!rental) {
+        console.log("Rental not found:", {
+          rentalId: req.params.id,
+          userId: req.user._id,
+        });
+        return res.status(404).json({ message: "Rental not found" });
+      }
 
-    // Validate status
-    if (
-      ![
+      const { status } = req.body;
+      const validStatuses = [
         "pending",
         "approved",
         "active",
-        "rejected",
         "completed",
+        "rejected",
         "cancelled",
-      ].includes(status)
-    ) {
-      console.log("Invalid status value:", status);
-      return res.status(400).json({ message: "Invalid status value" });
-    }
+      ];
 
-    // Add validation for status transitions
-    const validTransitions = {
-      pending: ["approved", "rejected", "cancelled"],
-      approved: ["pending", "active", "cancelled"],
-      active: ["approved", "completed", "cancelled"],
-      completed: ["active"],
-      rejected: ["pending"],
-      cancelled: ["pending", "approved", "active"],
-    };
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
 
-    if (!validTransitions[rental.status].includes(status)) {
-      console.log("Invalid status transition:", {
-        from: rental.status,
-        to: status,
-        allowedTransitions: validTransitions[rental.status],
+      // Validate status transitions
+      const validTransitions = {
+        pending: ["approved", "rejected", "cancelled"],
+        approved: ["active", "cancelled"],
+        active: ["completed", "cancelled"],
+        completed: [],
+        rejected: [],
+        cancelled: [],
+      };
+
+      if (!validTransitions[rental.status]?.includes(status)) {
+        console.log("Invalid status transition:", {
+          from: rental.status,
+          to: status,
+          allowedTransitions: validTransitions[rental.status],
+        });
+        return res.status(400).json({
+          message: `Invalid status transition from ${rental.status} to ${status}`,
+        });
+      }
+
+      const oldStatus = rental.status;
+      // If status is being set to approved, automatically set it to active
+      rental.status = status === "approved" ? "active" : status;
+
+      // Special handling for completion
+      if (status === "completed") {
+        // Make the product available again
+        await Product.findByIdAndUpdate(rental.product._id, {
+          "availability.isAvailable": true,
+        });
+      }
+
+      await rental.save();
+
+      // Create notification for status change
+      await createRentalNotification(rental, "rental_status");
+
+      console.log("Successfully updated rental status:", {
+        rentalId: rental._id,
+        oldStatus,
+        newStatus: rental.status,
       });
-      return res.status(400).json({
-        message: `Cannot change status from ${rental.status} to ${status}`,
+
+      res.json(rental);
+    } catch (error) {
+      console.error("Error updating rental status:", {
+        error: error.message,
+        stack: error.stack,
+        rentalId: req.params.id,
+        userId: req.user._id,
+        requestedStatus: req.body.status,
+      });
+      res.status(500).json({
+        message: "Error updating rental status",
+        error: error.message,
       });
     }
-
-    const oldStatus = rental.status;
-    rental.status = status;
-    await rental.save();
-
-    // Create notification for status change
-    await createRentalNotification(rental, "rental_status");
-
-    // Populate after save for response
-    await rental.populate("product");
-    await rental.populate("renter", "name email");
-
-    console.log("Successfully updated rental status:", {
-      rentalId: rental._id,
-      oldStatus: rental.status,
-      newStatus: status,
-    });
-
-    res.json(rental);
-  } catch (error) {
-    console.error("Error updating rental status:", {
-      error: error.message,
-      stack: error.stack,
-      rentalId: req.params.id,
-      userId: req.user._id,
-      requestedStatus: req.body.status,
-    });
-    res
-      .status(500)
-      .json({ message: "Error updating rental status", error: error.message });
   }
-});
+);
 
 // Approve rental request
 router.post("/rentals/:id/approve", async (req, res) => {

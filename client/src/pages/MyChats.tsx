@@ -43,7 +43,7 @@ export default function MyChats() {
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setSending] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
-  const pollTimeoutRef = useRef<NodeJS.Timeout>();
+  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Memoize fetch functions to avoid recreating them on each render
   const fetchChats = useCallback(async () => {
@@ -76,7 +76,7 @@ export default function MyChats() {
     // Update messages only if the chat is still selected
     if (selectedChat) {
       const currentChat = newChats.find(
-        (chat) => chat._id === selectedChat._id
+        (chat: ChatPreview) => chat._id === selectedChat._id
       );
       if (currentChat) {
         await fetchMessages();
@@ -97,7 +97,7 @@ export default function MyChats() {
       const userId = searchParams.get("userId");
 
       if (initialChats.length > 0 && (productId || userId)) {
-        const targetChat = initialChats.find((chat) => {
+        const targetChat = initialChats.find((chat: ChatPreview) => {
           if (productId && userId) {
             return (
               chat.product._id === productId && chat.otherUser._id === userId
@@ -132,13 +132,42 @@ export default function MyChats() {
     };
   }, [pollUpdates]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  // Improved scroll handling
+  const scrollToBottom = useCallback((forceScroll = false) => {
+    if (messagesEndRef.current) {
+      const chatContainer = messagesEndRef.current.parentElement;
+      if (chatContainer) {
+        const isScrolledNearBottom =
+          chatContainer.scrollHeight -
+            chatContainer.scrollTop -
+            chatContainer.clientHeight <
+          150;
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+        // Always scroll if user is near bottom, a new message is from the current user,
+        // or if force scroll is requested (e.g., on chat selection)
+        if (isScrolledNearBottom || forceScroll) {
+          messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    }
+  }, []);
+
+  // When messages change
+  useEffect(() => {
+    // Determine if the latest message is from the current user
+    const isLatestMessageFromCurrentUser =
+      messages.length > 0 &&
+      messages[messages.length - 1].sender._id === user?._id;
+
+    scrollToBottom(isLatestMessageFromCurrentUser);
+  }, [messages, user, scrollToBottom]);
+
+  // When chat is selected
+  useEffect(() => {
+    if (selectedChat) {
+      scrollToBottom(true); // Force scroll on chat selection
+    }
+  }, [selectedChat, scrollToBottom]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -244,7 +273,7 @@ export default function MyChats() {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
                 {messages.map((message) => (
                   <div
                     key={message._id}
@@ -271,7 +300,8 @@ export default function MyChats() {
                     </div>
                   </div>
                 ))}
-                <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} className="h-0" />{" "}
+                {/* Add height-0 to prevent extra space */}
               </div>
 
               {/* Message Input */}

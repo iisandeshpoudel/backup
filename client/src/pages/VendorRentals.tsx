@@ -1,23 +1,33 @@
-import { useState, useEffect } from 'react';
-import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import axios from '../utils/axios';
-import { format } from 'date-fns';
-import { 
-  CheckCircleIcon, 
-  XCircleIcon, 
-  EyeIcon, 
+import { useState, useEffect } from "react";
+import {
+  Link,
+  useSearchParams,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+import { motion } from "framer-motion";
+import axios from "../utils/axios";
+import { format } from "date-fns";
+import {
+  CheckCircleIcon,
+  XCircleIcon,
+  EyeIcon,
   EyeSlashIcon,
   TrashIcon,
   ClockIcon,
   PencilIcon,
-  MagnifyingGlassIcon
-} from '@heroicons/react/24/outline';
-import EditRentalModal from '../components/EditRentalModal';
-import { getImageUrl } from '../utils/imageUrl';
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
+import EditRentalModal from "../components/EditRentalModal";
+import { getImageUrl } from "../utils/imageUrl";
 
-// Update the rental status types to match the simplified workflow
-type RentalStatus = 'pending' | 'approved' | 'active' | 'completed' | 'rejected';
+type RentalStatus =
+  | "pending"
+  | "approved"
+  | "active"
+  | "completed"
+  | "rejected"
+  | "cancelled";
 
 interface Rental {
   _id: string;
@@ -50,28 +60,32 @@ export default function VendorRentals() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<'pending' | 'active' | 'completed'>('active');
-  
+  const [activeTab, setActiveTab] = useState<
+    "pending" | "active" | "completed"
+  >("active");
+
   const handleTabChange = (tab: typeof activeTab) => {
     setSearchParams({ tab }, { replace: true });
   };
 
   // Update URL when component mounts or when tab changes
   useEffect(() => {
-    const tabFromUrl = searchParams.get('tab');
-    const isValidTab = ['active', 'pending', 'completed'].includes(tabFromUrl || '');
-    const tab = isValidTab ? tabFromUrl : 'active';
-    
+    const tabFromUrl = searchParams.get("tab");
+    const isValidTab = ["active", "pending", "completed"].includes(
+      tabFromUrl || ""
+    );
+    const tab = isValidTab ? tabFromUrl : "active";
+
     // Update URL and state
     setSearchParams({ tab: tab as string }, { replace: true });
-    setActiveTab(tab as 'pending' | 'active' | 'completed');
-  }, [searchParams.get('tab')]);
+    setActiveTab(tab as "pending" | "active" | "completed");
+  }, [searchParams.get("tab")]);
 
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [filteredRentals, setFilteredRentals] = useState<Rental[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -88,46 +102,49 @@ export default function VendorRentals() {
     }
 
     const query = searchQuery.toLowerCase();
-    const filtered = rentals.filter(rental => 
-      rental.product.title.toLowerCase().includes(query) ||
-      rental.renter.name.toLowerCase().includes(query) ||
-      rental.renter.email.toLowerCase().includes(query)
+    const filtered = rentals.filter(
+      (rental) =>
+        rental.product.title.toLowerCase().includes(query) ||
+        rental.renter.name.toLowerCase().includes(query) ||
+        rental.renter.email.toLowerCase().includes(query)
     );
     setFilteredRentals(filtered);
   }, [searchQuery, rentals]);
 
   const fetchRentals = async () => {
     try {
-      let endpoint = '';
+      let endpoint = "";
       switch (activeTab) {
-        case 'pending':
-          endpoint = '/vendor/rentals/pending';
+        case "pending":
+          endpoint = "/vendor/rentals/pending";
           break;
-        case 'active':
-          endpoint = '/vendor/rentals/active';
+        case "active":
+          endpoint = "/vendor/rentals/active";
           break;
-        case 'completed':
-          endpoint = '/vendor/rentals/history';
+        case "completed":
+          endpoint = "/vendor/rentals/history";
           break;
       }
-      console.log('Fetching rentals from endpoint:', endpoint);
+      console.log("Fetching rentals from endpoint:", endpoint);
       const response = await axios.get(endpoint);
       // Transform dates from strings to Date objects
       const transformedRentals = response.data.map((rental: any) => ({
         ...rental,
         startDate: new Date(rental.startDate),
-        endDate: new Date(rental.endDate)
+        endDate: new Date(rental.endDate),
       }));
       setRentals(transformedRentals);
     } catch (err: any) {
       if (err.response?.status === 403) {
-        setError('Access denied. Please make sure you are logged in as a vendor.');
+        setError(
+          "Access denied. Please make sure you are logged in as a vendor."
+        );
       } else if (err.response?.status === 401) {
-        setError('Your session has expired. Please log in again.');
+        setError("Your session has expired. Please log in again.");
       } else {
-        setError('Failed to fetch rentals. Please try again later.');
+        setError("Failed to fetch rentals. Please try again later.");
       }
-      console.error('Error fetching rentals:', err);
+      console.error("Error fetching rentals:", err);
     } finally {
       setLoading(false);
     }
@@ -136,39 +153,68 @@ export default function VendorRentals() {
   const updateRentalStatus = async (rentalId: string, status: RentalStatus) => {
     try {
       setLoading(true);
+      // First, get the current rental to check its status
+      const currentRental = rentals.find((r) => r._id === rentalId);
+      if (!currentRental) {
+        throw new Error("Rental not found");
+      }
+
+      // Validate status transition
+      const validTransitions: { [key: string]: RentalStatus[] } = {
+        pending: ["approved", "rejected", "cancelled"],
+        active: ["completed", "cancelled"],
+        completed: [],
+        rejected: [],
+        cancelled: [],
+      };
+
+      if (!validTransitions[currentRental.status]?.includes(status)) {
+        throw new Error(
+          `Invalid status transition from ${currentRental.status} to ${status}`
+        );
+      }
+
       await axios.patch(`/vendor/rentals/${rentalId}/status`, { status });
       await fetchRentals();
     } catch (err: any) {
       if (err.response?.status === 403) {
-        setError('Access denied. Please make sure you are logged in as a vendor.');
+        setError(
+          "Access denied. Please make sure you are logged in as a vendor."
+        );
       } else if (err.response?.status === 401) {
-        setError('Your session has expired. Please log in again.');
+        setError("Your session has expired. Please log in again.");
       } else {
-        setError('Failed to update rental status. Please try again later.');
+        setError(
+          err.message ||
+            "Failed to update rental status. Please try again later."
+        );
       }
-      console.error('Error updating rental status:', err);
+      console.error("Error updating rental status:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleAvailability = async (productId: string, currentStatus: boolean) => {
+  const toggleAvailability = async (
+    productId: string,
+    currentStatus: boolean
+  ) => {
     try {
       setLoading(true);
       await axios.patch(`/vendor/products/${productId}/availability`, {
-        isAvailable: !currentStatus
+        isAvailable: !currentStatus,
       });
       await fetchRentals();
     } catch (err) {
-      console.error('Error toggling availability:', err);
-      setError('Failed to update product availability');
+      console.error("Error toggling availability:", err);
+      setError("Failed to update product availability");
     } finally {
       setLoading(false);
     }
   };
 
   const deleteRental = async (rentalId: string) => {
-    if (!window.confirm('Are you sure you want to delete this rental?')) {
+    if (!window.confirm("Are you sure you want to delete this rental?")) {
       return;
     }
 
@@ -176,8 +222,8 @@ export default function VendorRentals() {
       await axios.delete(`/vendor/rentals/${rentalId}`);
       fetchRentals();
     } catch (err) {
-      console.error('Error deleting rental:', err);
-      setError('Failed to delete rental');
+      console.error("Error deleting rental:", err);
+      setError("Failed to delete rental");
     }
   };
 
@@ -197,7 +243,7 @@ export default function VendorRentals() {
     complete: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
     approve: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500",
     reject: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
-    unavailable: "bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500"
+    unavailable: "bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500",
   };
 
   const baseButtonStyle = `
@@ -230,15 +276,16 @@ export default function VendorRentals() {
       <div className="mt-4">
         <div className="border-b border-gray-700">
           <nav className="-mb-px flex space-x-8">
-            {['active', 'pending', 'completed'].map((tab) => (
+            {["active", "pending", "completed"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => handleTabChange(tab as typeof activeTab)}
                 className={`
                   whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
-                  ${activeTab === tab
-                    ? 'border-primary-500 text-primary-500'
-                    : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                  ${
+                    activeTab === tab
+                      ? "border-primary-500 text-primary-500"
+                      : "border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300"
                   }
                 `}
               >
@@ -253,7 +300,10 @@ export default function VendorRentals() {
       <div className="mt-6">
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+            <MagnifyingGlassIcon
+              className="h-5 w-5 text-gray-400"
+              aria-hidden="true"
+            />
           </div>
           <input
             type="text"
@@ -286,16 +336,20 @@ export default function VendorRentals() {
                     <div className="flex-shrink-0">
                       <div className="relative w-full h-48 bg-gray-700">
                         <img
-                          src={rental.product.images[0]?.url ? getImageUrl(rental.product.images[0].url) : getImageUrl(undefined)}
+                          src={
+                            rental.product.images[0]?.url
+                              ? getImageUrl(rental.product.images[0].url)
+                              : getImageUrl(undefined)
+                          }
                           alt={rental.product.title}
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            console.error('Image load error:', {
+                            console.error("Image load error:", {
                               productId: rental.product._id,
                               title: rental.product.title,
                               originalUrl: rental.product.images[0]?.url,
-                              transformedUrl: target.src
+                              transformedUrl: target.src,
                             });
                             target.src = getImageUrl(undefined);
                           }}
@@ -327,11 +381,13 @@ export default function VendorRentals() {
                       <PencilIcon className="-ml-1 mr-2 h-5 w-5" />
                       Edit
                     </button>
-                    
-                    {activeTab === 'pending' && (
+
+                    {activeTab === "pending" && (
                       <>
                         <button
-                          onClick={() => updateRentalStatus(rental._id, 'approved')}
+                          onClick={() =>
+                            updateRentalStatus(rental._id, "approved")
+                          }
                           className={`${baseButtonStyle} ${buttonStyles.approve}`}
                           disabled={loading}
                         >
@@ -339,7 +395,9 @@ export default function VendorRentals() {
                           Approve
                         </button>
                         <button
-                          onClick={() => updateRentalStatus(rental._id, 'rejected')}
+                          onClick={() =>
+                            updateRentalStatus(rental._id, "rejected")
+                          }
                           className={`${baseButtonStyle} ${buttonStyles.reject}`}
                           disabled={loading}
                         >
@@ -348,10 +406,12 @@ export default function VendorRentals() {
                         </button>
                       </>
                     )}
-                    
-                    {activeTab === 'active' && (
+
+                    {activeTab === "active" && rental.status === "active" && (
                       <button
-                        onClick={() => updateRentalStatus(rental._id, 'completed')}
+                        onClick={() =>
+                          updateRentalStatus(rental._id, "completed")
+                        }
                         className={`${baseButtonStyle} ${buttonStyles.complete}`}
                         disabled={loading}
                       >
@@ -359,11 +419,16 @@ export default function VendorRentals() {
                         Mark as Complete
                       </button>
                     )}
-                    
+
                     <button
-                      onClick={() => toggleAvailability(rental.product._id, rental.product.availability.isAvailable)}
+                      onClick={() =>
+                        toggleAvailability(
+                          rental.product._id,
+                          rental.product.availability.isAvailable
+                        )
+                      }
                       className={`${baseButtonStyle} ${buttonStyles.unavailable}`}
-                      disabled={loading || activeTab === 'active'}
+                      disabled={loading || activeTab === "active"}
                     >
                       {rental.product.availability.isAvailable ? (
                         <>
@@ -382,20 +447,28 @@ export default function VendorRentals() {
               </div>
               <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="bg-gray-700/50 px-4 py-3 rounded-lg">
-                  <dt className="text-sm font-medium text-gray-400">Start Date</dt>
+                  <dt className="text-sm font-medium text-gray-400">
+                    Start Date
+                  </dt>
                   <dd className="mt-1 text-sm text-white">
-                    {format(new Date(rental.startDate), 'MMM d, yyyy')}
+                    {format(new Date(rental.startDate), "MMM d, yyyy")}
                   </dd>
                 </div>
                 <div className="bg-gray-700/50 px-4 py-3 rounded-lg">
-                  <dt className="text-sm font-medium text-gray-400">End Date</dt>
+                  <dt className="text-sm font-medium text-gray-400">
+                    End Date
+                  </dt>
                   <dd className="mt-1 text-sm text-white">
-                    {format(new Date(rental.endDate), 'MMM d, yyyy')}
+                    {format(new Date(rental.endDate), "MMM d, yyyy")}
                   </dd>
                 </div>
                 <div className="bg-gray-700/50 px-4 py-3 rounded-lg">
-                  <dt className="text-sm font-medium text-gray-400">Total Price</dt>
-                  <dd className="mt-1 text-sm text-white">Rs. {rental.totalPrice}</dd>
+                  <dt className="text-sm font-medium text-gray-400">
+                    Total Price
+                  </dt>
+                  <dd className="mt-1 text-sm text-white">
+                    Rs. {rental.totalPrice}
+                  </dd>
                 </div>
               </div>
               <div className="mt-6 flex flex-wrap gap-4">
@@ -404,14 +477,20 @@ export default function VendorRentals() {
                   <dd className="mt-1">
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                        ${rental.status === 'approved' ? 'bg-green-100 text-green-800' :
-                          rental.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                          rental.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          rental.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
+                        ${
+                          rental.status === "approved"
+                            ? "bg-green-100 text-green-800"
+                            : rental.status === "rejected"
+                            ? "bg-red-100 text-red-800"
+                            : rental.status === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : rental.status === "completed"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-800"
                         }`}
                     >
-                      {rental.status.charAt(0).toUpperCase() + rental.status.slice(1)}
+                      {rental.status.charAt(0).toUpperCase() +
+                        rental.status.slice(1)}
                     </span>
                   </dd>
                 </div>
@@ -440,4 +519,4 @@ export default function VendorRentals() {
       )}
     </div>
   );
-} 
+}

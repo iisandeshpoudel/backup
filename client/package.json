@@ -12,9 +12,11 @@
   "dependencies": {
     "@headlessui/react": "^1.7.18",
     "@heroicons/react": "^2.1.1",
+    "@types/lodash": "^4.17.15",
     "@types/react-datepicker": "^7.0.0",
     "axios": "^1.6.7",
     "framer-motion": "^11.0.3",
+    "lodash": "^4.17.21",
     "react": "^18.2.0",
     "react-datepicker": "^8.0.0",
     "react-dom": "^18.2.0",

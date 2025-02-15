@@ -116,12 +116,10 @@ router.get("/rentals/approved", async (req, res) => {
     const rentalsWithFullUrls = addFullImageUrls(rentals, req);
     res.json(rentalsWithFullUrls);
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Error fetching approved rentals",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error fetching approved rentals",
+      error: error.message,
+    });
   }
 });
 
@@ -159,12 +157,10 @@ router.get("/rentals/pending", async (req, res) => {
     const rentalsWithFullUrls = addFullImageUrls(rentals, req);
     res.json(rentalsWithFullUrls);
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Error fetching pending rentals",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error fetching pending rentals",
+      error: error.message,
+    });
   }
 });
 
@@ -361,12 +357,10 @@ router.get(
         total,
       });
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          message: "Error searching active rentals",
-          error: error.message,
-        });
+      res.status(500).json({
+        message: "Error searching active rentals",
+        error: error.message,
+      });
     }
   }
 );
@@ -430,12 +424,10 @@ router.get(
         total,
       });
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          message: "Error searching pending rentals",
-          error: error.message,
-        });
+      res.status(500).json({
+        message: "Error searching pending rentals",
+        error: error.message,
+      });
     }
   }
 );
@@ -509,14 +501,140 @@ router.get(
         total,
       });
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          message: "Error searching rental history",
-          error: error.message,
-        });
+      res.status(500).json({
+        message: "Error searching rental history",
+        error: error.message,
+      });
     }
   }
 );
+
+// Get detailed spending statistics
+router.get("/spending-stats", async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [
+      totalSpent,
+      monthlySpent,
+      weeklySpent,
+      dailySpent,
+      spendingByProduct,
+    ] = await Promise.all([
+      // Total spending
+      Rental.aggregate([
+        {
+          $match: {
+            renter: req.user._id,
+            status: { $in: ["completed", "active"] },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$totalPrice" },
+          },
+        },
+      ]),
+      // Monthly spending
+      Rental.aggregate([
+        {
+          $match: {
+            renter: req.user._id,
+            status: { $in: ["completed", "active"] },
+            startDate: { $gte: startOfMonth },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$totalPrice" },
+          },
+        },
+      ]),
+      // Weekly spending
+      Rental.aggregate([
+        {
+          $match: {
+            renter: req.user._id,
+            status: { $in: ["completed", "active"] },
+            startDate: { $gte: startOfWeek },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$totalPrice" },
+          },
+        },
+      ]),
+      // Daily spending
+      Rental.aggregate([
+        {
+          $match: {
+            renter: req.user._id,
+            status: { $in: ["completed", "active"] },
+            startDate: { $gte: startOfDay },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$totalPrice" },
+          },
+        },
+      ]),
+      // Spending by product
+      Rental.aggregate([
+        {
+          $match: {
+            renter: req.user._id,
+            status: { $in: ["completed", "active"] },
+          },
+        },
+        {
+          $group: {
+            _id: "$product",
+            spent: { $sum: "$totalPrice" },
+          },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: "_id",
+            foreignField: "_id",
+            as: "product",
+          },
+        },
+        {
+          $unwind: "$product",
+        },
+        {
+          $project: {
+            productId: "$_id",
+            productName: "$product.title",
+            spent: 1,
+          },
+        },
+      ]),
+    ]);
+
+    res.json({
+      totalSpent: totalSpent[0]?.total || 0,
+      monthlySpent: monthlySpent[0]?.total || 0,
+      weeklySpent: weeklySpent[0]?.total || 0,
+      dailySpent: dailySpent[0]?.total || 0,
+      spendingByProduct,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching spending statistics",
+      error: error.message,
+    });
+  }
+});
 
 module.exports = router;

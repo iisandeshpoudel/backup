@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   ShoppingBagIcon,
   ClockIcon,
   ChatBubbleLeftIcon,
   CurrencyDollarIcon,
-} from '@heroicons/react/24/outline';
-import axios from '../utils/axios';
-import { getImageUrl } from '../utils/imageUrl';
+} from "@heroicons/react/24/outline";
+import axios from "../utils/axios";
+import { getImageUrl } from "../utils/imageUrl";
 
 interface Stats {
   activeRentals: number;
@@ -40,7 +40,8 @@ interface Rental {
 const buttonStyles = {
   cancel: "bg-rose-200 text-rose-700 hover:bg-rose-300 focus:ring-rose-400",
   view: "bg-sky-200 text-sky-700 hover:bg-sky-300 focus:ring-sky-400",
-  default: "bg-slate-200 text-slate-700 hover:bg-slate-300 focus:ring-slate-400"
+  default:
+    "bg-slate-200 text-slate-700 hover:bg-slate-300 focus:ring-slate-400",
 };
 
 const baseButtonStyle = `
@@ -61,22 +62,24 @@ export default function CustomerDashboard() {
   const [rentalHistory, setRentalHistory] = useState<Rental[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
+  const [actionLoading, setActionLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         const [statsRes, activeRes, historyRes] = await Promise.all([
-          axios.get('/customer/stats'),
-          axios.get('/customer/rentals/active'),
-          axios.get('/customer/rentals/history'),
+          axios.get("/customer/stats"),
+          axios.get("/customer/rentals/active"),
+          axios.get("/customer/rentals/history"),
         ]);
         setStats(statsRes.data);
         setActiveRentals(activeRes.data);
         setRentalHistory(historyRes.data);
       } catch (err) {
-        setError('Failed to load dashboard data');
-        console.error('Dashboard data error:', err);
+        setError("Failed to load dashboard data");
+        console.error("Dashboard data error:", err);
       } finally {
         setLoading(false);
       }
@@ -86,59 +89,62 @@ export default function CustomerDashboard() {
   }, []);
 
   const handleCancelRental = async (rentalId: string) => {
-    if (!window.confirm('Are you sure you want to cancel this rental?')) {
+    if (!window.confirm("Are you sure you want to cancel this rental?")) {
       return;
     }
 
     try {
-      setActionLoading(prev => ({ ...prev, [rentalId]: true }));
+      setActionLoading((prev) => ({ ...prev, [rentalId]: true }));
       await axios.post(`/customer/rentals/${rentalId}/cancel`);
       // Refresh data
       const [activeRes, historyRes] = await Promise.all([
-        axios.get('/customer/rentals/active'),
-        axios.get('/customer/rentals/history'),
+        axios.get("/customer/rentals/active"),
+        axios.get("/customer/rentals/history"),
       ]);
       setActiveRentals(activeRes.data);
       setRentalHistory(historyRes.data);
     } catch (err) {
-      console.error('Cancel rental error:', err);
+      console.error("Cancel rental error:", err);
     } finally {
-      setActionLoading(prev => ({ ...prev, [rentalId]: false }));
+      setActionLoading((prev) => ({ ...prev, [rentalId]: false }));
     }
   };
 
   const stats_items = [
     {
-      name: 'Active Rentals',
+      name: "Active Rentals",
       stat: stats.activeRentals,
       icon: ShoppingBagIcon,
-      color: 'bg-blue-500',
-      link: '/customer/rentals?tab=active',
-      description: 'View your active rentals'
+      color: "bg-blue-500",
+      link: "/customer/rentals?tab=active",
+      description: "View your active rentals",
     },
     {
-      name: 'Total Rentals',
+      name: "Total Rentals",
       stat: stats.totalRentals,
       icon: ClockIcon,
-      color: 'bg-green-500',
-      link: '/customer/rentals',
-      description: 'View all your rentals'
+      color: "bg-green-500",
+      link: "/customer/rentals",
+      description: "View all your rentals",
     },
     {
-      name: 'Pending Requests',
+      name: "Pending Requests",
       stat: stats.pendingRequests,
       icon: ChatBubbleLeftIcon,
-      color: 'bg-yellow-500',
-      link: '/customer/rentals?tab=pending',
-      description: 'View your pending requests'
+      color: "bg-yellow-500",
+      link: "/customer/rentals?tab=pending",
+      description: "View your pending requests",
     },
     {
-      name: 'Total Spent',
-      stat: `Rs. ${stats.totalSpent.toFixed(2)}`,
+      name: "Total Spent",
+      stat: `Rs. ${stats.totalSpent.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
       icon: CurrencyDollarIcon,
-      color: 'bg-purple-500',
-      link: '/customer/rentals?tab=completed',
-      description: 'View your rental history'
+      color: "bg-purple-500",
+      link: "/spending", // Updated link to the new spending page
+      description: "View your spending details",
     },
   ];
 
@@ -160,20 +166,20 @@ export default function CustomerDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'active':
-        return 'bg-emerald-100/90 text-emerald-800';
-      case 'approved':
-        return 'bg-sky-100/90 text-sky-800';
-      case 'completed':
-        return 'bg-violet-100/90 text-violet-800';
-      case 'pending':
-        return 'bg-amber-100/90 text-amber-800';
-      case 'rejected':
-        return 'bg-rose-100/90 text-rose-800';
-      case 'cancelled':
-        return 'bg-gray-100/90 text-gray-800';
+      case "active":
+        return "bg-emerald-100/90 text-emerald-800";
+      case "approved":
+        return "bg-sky-100/90 text-sky-800";
+      case "completed":
+        return "bg-violet-100/90 text-violet-800";
+      case "pending":
+        return "bg-amber-100/90 text-amber-800";
+      case "rejected":
+        return "bg-rose-100/90 text-rose-800";
+      case "cancelled":
+        return "bg-gray-100/90 text-gray-800";
       default:
-        return 'bg-slate-100/90 text-slate-800';
+        return "bg-slate-100/90 text-slate-800";
     }
   };
 
@@ -181,7 +187,9 @@ export default function CustomerDashboard() {
     <div className="px-4 sm:px-6 lg:px-8 py-8">
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-          <h1 className="text-2xl font-semibold text-white">Customer Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-white">
+            Customer Dashboard
+          </h1>
           <p className="mt-2 text-sm text-gray-400">
             View your rentals and manage your requests.
           </p>
@@ -212,7 +220,10 @@ export default function CustomerDashboard() {
             >
               <dt>
                 <div className={`absolute rounded-md p-3 ${item.color}`}>
-                  <item.icon className="h-6 w-6 text-white" aria-hidden="true" />
+                  <item.icon
+                    className="h-6 w-6 text-white"
+                    aria-hidden="true"
+                  />
                 </div>
                 <p className="ml-16 truncate text-sm font-medium text-gray-400">
                   {item.name}
@@ -253,16 +264,20 @@ export default function CustomerDashboard() {
                   >
                     <div className="flex items-center space-x-4">
                       <img
-                        src={rental.product.images[0]?.url ? getImageUrl(rental.product.images[0].url) : getImageUrl(undefined)}
+                        src={
+                          rental.product.images[0]?.url
+                            ? getImageUrl(rental.product.images[0].url)
+                            : getImageUrl(undefined)
+                        }
                         alt={rental.product.title}
                         className="h-12 w-12 rounded-lg object-cover"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          console.error('Image load error:', {
+                          console.error("Image load error:", {
                             productId: rental.product._id,
                             title: rental.product.title,
                             originalUrl: rental.product.images[0]?.url,
-                            transformedUrl: target.src
+                            transformedUrl: target.src,
                           });
                           target.src = getImageUrl(undefined);
                         }}
@@ -275,18 +290,24 @@ export default function CustomerDashboard() {
                           From {rental.owner.name}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {new Date(rental.startDate).toLocaleDateString()} -{' '}
+                          {new Date(rental.startDate).toLocaleDateString()} -{" "}
                           {new Date(rental.endDate).toLocaleDateString()}
                         </p>
                       </div>
                       <div className="flex flex-col items-end space-y-2">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(rental.status)}`}>
-                          {rental.status.charAt(0).toUpperCase() + rental.status.slice(1)}
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(
+                            rental.status
+                          )}`}
+                        >
+                          {rental.status.charAt(0).toUpperCase() +
+                            rental.status.slice(1)}
                         </span>
                         <p className="text-sm font-medium text-gray-400">
                           Rs. {rental.totalPrice}
                         </p>
-                        {(rental.status === 'approved' || rental.status === 'pending') && (
+                        {(rental.status === "approved" ||
+                          rental.status === "pending") && (
                           <button
                             onClick={() => handleCancelRental(rental._id)}
                             disabled={actionLoading[rental._id]}
@@ -298,7 +319,7 @@ export default function CustomerDashboard() {
                                 Cancelling...
                               </>
                             ) : (
-                              'Cancel'
+                              "Cancel"
                             )}
                           </button>
                         )}
@@ -341,16 +362,20 @@ export default function CustomerDashboard() {
                   >
                     <div className="flex items-center space-x-4">
                       <img
-                        src={rental.product.images[0]?.url ? getImageUrl(rental.product.images[0].url) : getImageUrl(undefined)}
+                        src={
+                          rental.product.images[0]?.url
+                            ? getImageUrl(rental.product.images[0].url)
+                            : getImageUrl(undefined)
+                        }
                         alt={rental.product.title}
                         className="h-12 w-12 rounded-lg object-cover"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          console.error('Image load error:', {
+                          console.error("Image load error:", {
                             productId: rental.product._id,
                             title: rental.product.title,
                             originalUrl: rental.product.images[0]?.url,
-                            transformedUrl: target.src
+                            transformedUrl: target.src,
                           });
                           target.src = getImageUrl(undefined);
                         }}
@@ -363,13 +388,18 @@ export default function CustomerDashboard() {
                           From {rental.owner.name}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {new Date(rental.startDate).toLocaleDateString()} -{' '}
+                          {new Date(rental.startDate).toLocaleDateString()} -{" "}
                           {new Date(rental.endDate).toLocaleDateString()}
                         </p>
                       </div>
                       <div className="flex flex-col items-end space-y-1">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(rental.status)}`}>
-                          {rental.status.charAt(0).toUpperCase() + rental.status.slice(1)}
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(
+                            rental.status
+                          )}`}
+                        >
+                          {rental.status.charAt(0).toUpperCase() +
+                            rental.status.slice(1)}
                         </span>
                         <p className="text-sm font-medium text-gray-400">
                           Rs. {rental.totalPrice}
@@ -390,4 +420,4 @@ export default function CustomerDashboard() {
       </div>
     </div>
   );
-} 
+}

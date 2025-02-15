@@ -2,43 +2,43 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import axios from "../utils/axios";
 
-interface RevenueStats {
-  totalRevenue: number;
-  monthlyRevenue: number;
-  weeklyRevenue: number;
-  dailyRevenue: number;
-  revenueByProduct: {
+interface SpendingStats {
+  totalSpent: number;
+  monthlySpent: number;
+  weeklySpent: number;
+  dailySpent: number;
+  spendingByProduct: {
     productId: string;
     productName: string;
-    revenue: number;
+    spent: number;
   }[];
 }
 
-export default function Revenue() {
+export default function Spending() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<RevenueStats>({
-    totalRevenue: 0,
-    monthlyRevenue: 0,
-    weeklyRevenue: 0,
-    dailyRevenue: 0,
-    revenueByProduct: [],
+  const [stats, setStats] = useState<SpendingStats>({
+    totalSpent: 0,
+    monthlySpent: 0,
+    weeklySpent: 0,
+    dailySpent: 0,
+    spendingByProduct: [],
   });
 
   useEffect(() => {
-    const fetchRevenueStats = async () => {
+    const fetchSpendingStats = async () => {
       try {
-        const response = await axios.get("/vendor/revenue-stats");
+        const response = await axios.get("/customer/spending-stats");
         setStats(response.data);
       } catch (err) {
-        setError("Failed to load revenue statistics");
-        console.error("Revenue stats error:", err);
+        setError("Failed to load spending statistics");
+        console.error("Spending stats error:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRevenueStats();
+    fetchSpendingStats();
   }, []);
 
   if (loading) {
@@ -62,21 +62,21 @@ export default function Revenue() {
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
           <h1 className="text-2xl font-semibold text-white">
-            Revenue Overview
+            Spending Overview
           </h1>
           <p className="mt-2 text-sm text-gray-400">
-            Detailed breakdown of your rental revenue
+            Detailed breakdown of your rental spending
           </p>
         </div>
       </div>
 
-      {/* Revenue Stats Grid */}
+      {/* Spending Stats Grid */}
       <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { name: "Total Revenue", amount: stats.totalRevenue },
-          { name: "Monthly Revenue", amount: stats.monthlyRevenue },
-          { name: "Weekly Revenue", amount: stats.weeklyRevenue },
-          { name: "Daily Revenue", amount: stats.dailyRevenue },
+          { name: "Total Spent", amount: stats.totalSpent },
+          { name: "Monthly Spent", amount: stats.monthlySpent },
+          { name: "Weekly Spent", amount: stats.weeklySpent },
+          { name: "Daily Spent", amount: stats.dailySpent },
         ].map((item) => (
           <motion.div
             key={item.name}
@@ -99,15 +99,15 @@ export default function Revenue() {
         ))}
       </div>
 
-      {/* Revenue by Product */}
+      {/* Spending by Product */}
       <div className="mt-8">
-        <h2 className="text-lg font-medium text-white">Revenue by Product</h2>
+        <h2 className="text-lg font-medium text-white">Spending by Product</h2>
         <div className="mt-4 overflow-hidden rounded-lg bg-gray-800 shadow">
           <div className="px-4 py-5 sm:p-6">
             <div className="flow-root">
-              {stats.revenueByProduct.length > 0 ? (
+              {stats.spendingByProduct.length > 0 ? (
                 <ul role="list" className="-my-5 divide-y divide-gray-700">
-                  {stats.revenueByProduct.map((product) => (
+                  {stats.spendingByProduct.map((product) => (
                     <motion.li
                       key={product.productId}
                       initial={{ opacity: 0 }}
@@ -123,7 +123,7 @@ export default function Revenue() {
                         <div className="ml-4 flex-shrink-0">
                           <span className="text-sm text-gray-400">
                             Rs.{" "}
-                            {product.revenue.toLocaleString(undefined, {
+                            {product.spent.toLocaleString(undefined, {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}
@@ -135,7 +135,7 @@ export default function Revenue() {
                 </ul>
               ) : (
                 <div className="py-4 text-center text-gray-400">
-                  No revenue data available yet.
+                  No spending data available yet.
                 </div>
               )}
             </div>

@@ -17,6 +17,7 @@ import VendorRentals from "./pages/VendorRentals";
 import Revenue from "./pages/Revenue";
 import Profile from "./pages/Profile";
 import MyChats from "./pages/MyChats";
+import Spending from "./pages/Spending";
 
 // Protected route wrapper
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({
@@ -163,6 +164,17 @@ function App() {
           <RoleRoute allowedRoles={["vendor"]}>
             <Layout>
               <Revenue />
+            </Layout>
+          </RoleRoute>
+        }
+      />
+
+      <Route
+        path="/spending"
+        element={
+          <RoleRoute allowedRoles={["customer"]}>
+            <Layout>
+              <Spending />
             </Layout>
           </RoleRoute>
         }
