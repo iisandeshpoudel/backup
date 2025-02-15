@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const path = require("path");
 const fs = require("fs");
 require("dotenv").config();
+const { createRentalNotification } = require("./utils/notifications");
+const Rental = require("./models/Rental");
 
 const app = express();
 
@@ -15,6 +17,7 @@ const vendorRoutes = require("./routes/vendor");
 const adminRoutes = require("./routes/admin");
 const customerRoutes = require("./routes/customer");
 const chatRoutes = require("./routes/chat"); // Changed from chatRoutes to chat
+const notificationRoutes = require("./routes/notifications");
 
 // Middleware
 app.use(cors());
@@ -29,6 +32,7 @@ app.use("/api/vendor", vendorRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Serve static files from uploads directory
 app.use("/api/uploads", express.static(path.join(__dirname, "../uploads")));
@@ -144,6 +148,34 @@ mongoose
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
+
+    // Set up rental reminder check every hour
+    setInterval(async () => {
+      try {
+        // Find rentals that start tomorrow and haven't had a reminder sent
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+
+        const dayAfterTomorrow = new Date(tomorrow);
+        dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+
+        const rentalsStartingTomorrow = await Rental.find({
+          startDate: {
+            $gte: tomorrow,
+            $lt: dayAfterTomorrow,
+          },
+          status: { $in: ["approved", "active"] },
+        }).populate("product");
+
+        // Send notifications for each rental
+        for (const rental of rentalsStartingTomorrow) {
+          await createRentalNotification(rental, "rental_reminder");
+        }
+      } catch (error) {
+        console.error("Error sending rental reminders:", error);
+      }
+    }, 60 * 60 * 1000); // Check every hour
   })
   .catch((err) => {
     console.error("MongoDB connection error:", err);

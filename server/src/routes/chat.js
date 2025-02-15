@@ -4,6 +4,7 @@ const { protect } = require("../middleware/auth");
 const Message = require("../models/Message");
 const Product = require("../models/Product");
 const mongoose = require("mongoose");
+const { createChatNotification } = require("../utils/notifications");
 
 // Test route
 router.get("/test", (req, res) => {
@@ -202,6 +203,9 @@ router.post("/product/:productId", protect, async (req, res) => {
     const populatedMessage = await Message.findById(savedMessage._id)
       .populate("sender", "name role")
       .populate("receiver", "name role");
+
+    // Create notification for the receiver
+    await createChatNotification(populatedMessage);
 
     console.log("- Message saved successfully");
     res.json(populatedMessage);

@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "../utils/axios";
-import { Link } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { getImageUrl } from "../utils/imageUrl";
 
 interface ChatPreview {
@@ -35,6 +35,7 @@ interface Message {
 
 export default function MyChats() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [chats, setChats] = useState<ChatPreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedChat, setSelectedChat] = useState<ChatPreview | null>(null);
@@ -42,39 +43,21 @@ export default function MyChats() {
   const [newMessage, setNewMessage] = useState("");
   const [isSending, setSending] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
+  const pollTimeoutRef = useRef<NodeJS.Timeout>();
 
-  useEffect(() => {
-    fetchChats();
-  }, []);
-
-  useEffect(() => {
-    if (selectedChat) {
-      fetchMessages();
-      const interval = setInterval(fetchMessages, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [selectedChat]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const fetchChats = async () => {
+  // Memoize fetch functions to avoid recreating them on each render
+  const fetchChats = useCallback(async () => {
     try {
       const response = await axios.get("/chat/conversations");
       setChats(response.data);
+      return response.data;
     } catch (error) {
       console.error("Error fetching chats:", error);
-    } finally {
-      setLoading(false);
+      return [];
     }
-  };
+  }, []);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!selectedChat) return;
     try {
       const response = await axios.get(
@@ -84,6 +67,77 @@ export default function MyChats() {
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
+  }, [selectedChat]);
+
+  // Combined polling function
+  const pollUpdates = useCallback(async () => {
+    const newChats = await fetchChats();
+
+    // Update messages only if the chat is still selected
+    if (selectedChat) {
+      const currentChat = newChats.find(
+        (chat) => chat._id === selectedChat._id
+      );
+      if (currentChat) {
+        await fetchMessages();
+      }
+    }
+
+    // Schedule next poll
+    pollTimeoutRef.current = setTimeout(pollUpdates, 3000);
+  }, [fetchChats, fetchMessages, selectedChat]);
+
+  // Handle initial load and URL parameters
+  useEffect(() => {
+    const loadInitialData = async () => {
+      const initialChats = await fetchChats();
+      setLoading(false);
+
+      const productId = searchParams.get("productId");
+      const userId = searchParams.get("userId");
+
+      if (initialChats.length > 0 && (productId || userId)) {
+        const targetChat = initialChats.find((chat) => {
+          if (productId && userId) {
+            return (
+              chat.product._id === productId && chat.otherUser._id === userId
+            );
+          }
+          if (productId) {
+            return chat.product._id === productId;
+          }
+          if (userId) {
+            return chat.otherUser._id === userId;
+          }
+          return false;
+        });
+
+        if (targetChat) {
+          setSelectedChat(targetChat);
+        }
+      }
+    };
+
+    loadInitialData();
+  }, [searchParams, fetchChats]);
+
+  // Setup and cleanup polling
+  useEffect(() => {
+    pollUpdates();
+
+    return () => {
+      if (pollTimeoutRef.current) {
+        clearTimeout(pollTimeoutRef.current);
+      }
+    };
+  }, [pollUpdates]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -96,8 +150,8 @@ export default function MyChats() {
         content: newMessage.trim(),
       });
       setNewMessage("");
-      await fetchMessages();
-      await fetchChats(); // Refresh chat list to update last message
+      // Immediately fetch updates after sending
+      await Promise.all([fetchMessages(), fetchChats()]);
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
